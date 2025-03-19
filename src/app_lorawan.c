@@ -40,9 +40,9 @@ int8_t app_lorawan_init(const struct device *dev)
 	static struct nvs_fs fs;
 	uint16_t dev_nonce = 0u;
 
-    int8_t ret;
+    int8_t ret = 0;
 	int8_t itr = 1;
-	ssize_t err;
+	ssize_t err = 0;
 	uint8_t dev_eui[] 	= LORAWAN_DEV_EUI;
 	uint8_t join_eui[]	= LORAWAN_JOIN_EUI;
 	uint8_t app_key[]	= LORAWAN_APP_KEY;

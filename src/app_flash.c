@@ -11,7 +11,7 @@
 int8_t app_flash_init(struct nvs_fs *fs)
 {
 	struct flash_pages_info info;
-	int8_t ret;
+	int8_t ret = 0;
 
 	// configuration of storage partition in flash memory
 	fs->flash_device = NVS_PARTITION_DEVICE;
@@ -50,8 +50,9 @@ int8_t app_flash_init(struct nvs_fs *fs)
 //  ========== app_flash_init_param ========================================================
 int8_t app_flash_init_param(struct nvs_fs *fs, uint16_t id, void *data)
 {
-	int8_t ret;
+	int8_t ret = 0;
 
+	// reading the first page. if no data, printing data stored in memory
 	ret = nvs_read(fs, id, data, sizeof(data));
 	if (ret > 0) {
 		printk("ID: %d, address: %s\n", id, data);

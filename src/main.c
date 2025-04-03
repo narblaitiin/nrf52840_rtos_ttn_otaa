@@ -5,8 +5,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+//  ========== includes ====================================================================
 #include "app_lorawan.h"
-#include <zephyr/logging/log.h>
 
 //  ========== globals =====================================================================
 static const struct gpio_dt_spec led_tx = GPIO_DT_SPEC_GET(LED_TX, gpios);
@@ -25,13 +25,13 @@ int8_t main(void)
 	const struct device *dev;
 	struct values data;
 	uint8_t payload[9];
-    int8_t ret;
+    int8_t ret = 0;
 
 	// configuration of LEDs
 	gpio_pin_configure_dt(&led_tx, GPIO_OUTPUT_ACTIVE);
 	gpio_pin_configure_dt(&led_rx, GPIO_OUTPUT_ACTIVE);
 	gpio_pin_set_dt(&led_tx, 0);
-	//gpio_pin_set_dt(&led_rx, 0);
+	gpio_pin_set_dt(&led_rx, 0);
 
 	// initialization of LoRaWAN - TTN
 	app_lorawan_init(dev);
@@ -40,12 +40,12 @@ int8_t main(void)
 	
 	// beginning forever loop (polling mode)
 	while (1) {
+
 		// constrution of random data structure
 		data.vbat = sys_rand16_get() % (100 - 0 + 1) + 0;
-		data.temp = -15 + sys_rand16_get() % (50 - 25 +1);
+		data.temp = sys_rand16_get() % (100 - (-100) +1) + (-100);
 		data.hum = sys_rand16_get() % (100 - 0 + 1) + 0;
 		data.vadc = sys_rand16_get() % (3300 - 0 + 1) + 0;
-		printk("vbat: %"PRId16", temp: %"PRId16", hum: %"PRId16", vadc: %"PRId16"\n", data.vbat, data.temp, data.hum, data.vadc);
 		
 		// transmission of packets on lorawan protocole - encode payload to bytes
 		// battery needs 2 bytes
@@ -56,7 +56,7 @@ int8_t main(void)
 		if (data.temp < 0) {
 			payload[2] = 1 & 0xff;
 		} else {
-			payload[2] = 1 & 0xff;
+			payload[2] = 0 & 0xff;
 		}
 		payload[3] = (data.temp >> 8) & 0xFF;
         payload[4] = data.temp & 0xFF;
@@ -70,25 +70,22 @@ int8_t main(void)
         payload[8] = data.vadc & 0xFF;
 
 		printk("sending random data...\n");
+
 		gpio_pin_set_dt(&led_tx, 1);
+
 		ret = lorawan_send(LORAWAN_PORT, payload, sizeof(payload), LORAWAN_MSG_UNCONFIRMED);
-		gpio_pin_set_dt(&led_tx, 0);
+		
 		if (ret == -EAGAIN) {
 			printk("lorawan_send failed: %d. continuing...\n", ret);
 			k_sleep(DELAY);
 			continue;
+		} else if (ret < 0) {
+			printk("lorawan_send failed: %d", ret);
+			return(-1);
 		}
-		
-		if (ret < 0) {
-			printk("lorawan_send failed: %d.\n", ret);
-			k_sleep(DELAY);
-			continue;
-			//return 0;
-		} else {
-			// flashing of the LED when a packet is transmitted
-			printk("data sent!\n");
-			k_sleep(DELAY);
-		}
+		printk("data sent!\n");
+		gpio_pin_set_dt(&led_tx, 0);
+		k_sleep(DELAY);
 	}
 	return 0;
 }

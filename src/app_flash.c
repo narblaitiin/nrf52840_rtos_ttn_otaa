@@ -1,10 +1,11 @@
 /*
- * Copyright (c) 2024
+ * Copyright (c) 2025
  * Regis Rousseau
  * Univ Lyon, INSA Lyon, Inria, CITI, EA3720
  * SPDX-License-Identifier: Apache-2.0
  */
- 
+
+//  ========== include =====================================================================
 #include "app_flash.h"
 
 //  ========== app_flash_init ==============================================================
@@ -42,9 +43,7 @@ int8_t app_flash_init(struct nvs_fs *fs)
 		printk("flash init failed. error: %d\n", ret);
 		return 0;
 	}
-
-	// cleaning data storage partition
-//	(void)nvs_delete(fs, NVS_DEVNONCE_ID);
+	return 0;
 }
 
 //  ========== app_flash_init_param ========================================================

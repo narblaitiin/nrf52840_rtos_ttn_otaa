@@ -1,4 +1,4 @@
-# Code for 6Sens Project : LoRaWAN application test for my own MBDT50Q (based on nRF52840) board
+# Code for 6Sens Project : testing the LoRaWAN application with integration in TTN
 
 ## Overview
 This application contains example code to allow testing of LoRaWAN Network Application.

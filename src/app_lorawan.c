@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+//  ========== includes ====================================================================
 #include "app_lorawan.h"
 #include "app_flash.h"
 
@@ -52,6 +53,7 @@ int8_t app_lorawan_init(const struct device *dev)
 	app_flash_init_param(&fs, NVS_DEVNONCE_ID, &dev_nonce);
 
 	printk("starting lorawan node\n");
+
     // getting lora sx1276 device
 	dev = DEVICE_DT_GET(DT_ALIAS(lora0));
 	if (!device_is_ready(dev)) {
@@ -60,12 +62,15 @@ int8_t app_lorawan_init(const struct device *dev)
 	}
 
 	printk("starting lorawan stack\n");
+
     // starting device
 	ret = lorawan_set_region(LORAWAN_REGION_EU868);
 	if (ret < 0) {
 		printk("lorawan_set_region failed: %d\n", ret);
 		return 0;
 	}
+
+	gpio_pin_set_dt(&led_tx, 1);
 
 	ret = lorawan_start();
 	if (ret < 0) {
@@ -76,7 +81,7 @@ int8_t app_lorawan_init(const struct device *dev)
 	}
 
 	// enable ADR
-    lorawan_enable_adr(false);
+    lorawan_enable_adr(true);
 
     // enable callbacks
 	struct lorawan_downlink_cb downlink_cb = {
@@ -88,7 +93,6 @@ int8_t app_lorawan_init(const struct device *dev)
 
 	// configuration of lorawan parameters 
     join_cfg.mode = LORAWAN_ACT_OTAA;
-//	join_cfg.mode = LORAWAN_CLASS_A;
 	join_cfg.dev_eui = dev_eui;
 	join_cfg.otaa.join_eui = join_eui;
 	join_cfg.otaa.app_key = app_key;
@@ -97,7 +101,9 @@ int8_t app_lorawan_init(const struct device *dev)
 
 	do {
 		printk("joining network over OTAA, dev nonce %d, attempt %d\n", join_cfg.otaa.dev_nonce, itr++);
+
 		gpio_pin_set_dt(&led_rx, 1);
+
 		ret = lorawan_join(&join_cfg);
 		if (ret < 0) {
 			if ((ret =-ETIMEDOUT)) {
@@ -124,7 +130,8 @@ int8_t app_lorawan_init(const struct device *dev)
 		}
 	} while (ret != 0);
 
-//	gpio_pin_set_dt(&led_rx, 0);
+	gpio_pin_set_dt(&led_tx, 0);
+	gpio_pin_set_dt(&led_rx, 0);
     return 0;
 }
 

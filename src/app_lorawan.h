@@ -29,6 +29,7 @@
 #define LORAWAN_JOIN_EUI		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
 #define LORAWAN_APP_KEY			{ 0xC7, 0x32, 0x0F, 0x37, 0xFF, 0x62, 0xE0, 0xA8, 0x4E, 0x94, 0xC1, 0x9C, 0x27, 0x2B, 0xFA, 0x4C }
 #define LORAWAN_PORT            2       // application port
+#define MAX_JOIN_ATTEMPTS       10      // limiting join attempts
 
 //  ========== prototypes ==================================================================
 int8_t app_lorawan_init(const struct device *dev);

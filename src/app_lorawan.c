@@ -36,7 +36,6 @@ static void lorwan_datarate_changed(enum lorawan_datarate dr)
 //  ========== app_loarwan_init ============================================================
 int8_t app_lorawan_init(const struct device *dev)
 {
-    struct lora_modem_config config;
 	struct lorawan_join_config join_cfg;
 	static struct nvs_fs fs;
 	uint16_t dev_nonce = 0u;
@@ -106,7 +105,7 @@ int8_t app_lorawan_init(const struct device *dev)
 
 		ret = lorawan_join(&join_cfg);
 		if (ret < 0) {
-			if ((ret =-ETIMEDOUT)) {
+			if (ret == -ETIMEDOUT) {
 				printk("timed-out waiting for response.\n");
 			} else {
 				printk("join network failed. error: %d\n", ret);
@@ -128,7 +127,7 @@ int8_t app_lorawan_init(const struct device *dev)
 			// if failed, wait before re-trying.
 			k_sleep(K_MSEC(10000));
 		}
-	} while (ret != 0);
+	} while (ret != 0 && itr < MAX_JOIN_ATTEMPTS);
 
 	gpio_pin_set_dt(&led_tx, 0);
 	gpio_pin_set_dt(&led_rx, 0);

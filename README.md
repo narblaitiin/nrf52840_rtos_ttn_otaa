@@ -2,13 +2,14 @@
 
 ## Overview
 This application contains example code to allow testing of LoRaWAN Network Application.
-This code also allows to test a physical link from the node to the gateway then from the gateway to TTN.
+This code also allows to test a physical link from the node to the gateway then from the gateway to TTN. The version of Zephyr RTOS used is the version v3.6.0.
+
 The packets sent have the following characteristics:
 
     - Timer : packets every 30 secondes
     - Random value with the range from min = 0 to max = 100% like values from ADC (sensor/battery to percent of charge/discharge)
-    - random value with the range fron 0 to 100% for humidity 
-    - random value with the range from -25 to +50 degree celsius
+    - Random value with the range fron 0 to 100% for humidity 
+    - Random value with the range from -25 to +50 degree celsius
     - Number of packets : forever loop
     - Number of nodes : 5  
 
@@ -25,7 +26,7 @@ You will need to register new devices in your application (with OTAA activation 
     - After that, you have to add a new end device on this application. You have to complete the various fields using the available data below in manually mode :
         Frequency Plan                  Europe 863-870 MHz (SF9 for RX2 - Recommended)
         LoRaWAN Version                 MAC V1.0.4
-        Regional Parameter Version      RP002 Regional Parameters 1.0.3
+        Regional Parameter Version      RP002 Regional Parameters 1.0.4
         Activation by personalization   OTAA
         Application ID                  give a name
         JoinEUI                         00 00 00 00 00 00 00 00
@@ -39,7 +40,7 @@ You will need to register new devices in your application (with OTAA activation 
 The following commands clean build folder, build and flash the sample:
 
 **Command to use**
-
+````
 west -t pristine
 
 west build -p always -b mdbt50q_lora_dev applications/nrf52840_rtos_ttn_otaa

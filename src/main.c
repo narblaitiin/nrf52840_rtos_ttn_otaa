@@ -73,16 +73,19 @@ int8_t main(void)
 
 		gpio_pin_set_dt(&led_tx, 1);
 
-		ret = lorawan_send(LORAWAN_PORT, payload, sizeof(payload), LORAWAN_MSG_UNCONFIRMED);
+		ret = lorawan_send(LORAWAN_PORT, payload, sizeof(payload), LORAWAN_MSG_CONFIRMED);
 		
 		if (ret == -EAGAIN) {
 			printk("lorawan_send failed: %d. continuing...\n", ret);
 			k_sleep(DELAY);
 			continue;
-		} else if (ret < 0) {
-			printk("lorawan_send failed: %d", ret);
-			return(-1);
 		}
+		
+		if (ret < 0) {
+			printk("lorawan_send failed: %d", ret);
+			return(0);
+		}
+
 		printk("data sent!\n");
 		gpio_pin_set_dt(&led_tx, 0);
 		k_sleep(DELAY);

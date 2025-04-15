@@ -24,7 +24,7 @@ int8_t main(void)
 {
 	const struct device *dev;
 	struct values data;
-	uint8_t payload[9];
+	uint8_t payload[MAX_SAMPLES];
     int8_t ret = 0;
 
 	// configuration of LEDs
@@ -36,7 +36,7 @@ int8_t main(void)
 	// initialization of LoRaWAN - TTN
 	app_lorawan_init(dev);
 
-	printk("Geophone Measurement Simulation and Process Information - Board: %s\n", CONFIG_BOARD);
+	printk("Geophone Measurement Simulation and Process Information\nBoard: %s\n", CONFIG_BOARD);
 	
 	// beginning forever loop (polling mode)
 	while (1) {

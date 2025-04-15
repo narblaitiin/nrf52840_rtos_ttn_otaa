@@ -13,21 +13,20 @@
 static const struct gpio_dt_spec led_tx = GPIO_DT_SPEC_GET(LED_TX, gpios);
 static const struct gpio_dt_spec led_rx = GPIO_DT_SPEC_GET(LED_RX, gpios);
 
-// structure to hold simulated sensor data
-struct values {
-	int16_t vbat;  // battery voltage in millivolts
-	int16_t temp;  // temperature in tenths of a degree Celsius
-	int16_t hum;   // humidity as a percentage
-	int16_t vadc;  // ADC voltage in millivolts
-};
-
 //  ========== main ========================================================================
 int8_t main(void)
 {
 	const struct device *dev;
-	struct values data;
-	uint8_t payload[MAX_SAMPLES];
+	uint8_t payload[PAYLOAD_SIZE] = {0};
     int8_t ret = 0;
+
+	// structure to hold simulated sensor data
+	struct data_t {
+		int16_t vbat;  // battery voltage in millivolts
+		int16_t temp;  // temperature in tenths of a degree Celsius
+		int16_t hum;   // humidity as a percentage
+		int16_t vadc;  // ADC voltage in millivolts
+	} data;
 
 	// configure LEDs for TX and RX indication
 	gpio_pin_configure_dt(&led_tx, GPIO_OUTPUT_ACTIVE);
@@ -49,30 +48,25 @@ int8_t main(void)
 		data.hum = sys_rand16_get() % 101;             // humidity: 0-100
 		data.vadc = sys_rand16_get() % 3301;           // ADC voltage: 0-3300 mV
 		
-		// encode the sensor data into the payload for LoRaWAN transmission
-		// battery voltage: 2 bytes (16 bits)
-		payload[0] = (data.vbat >> 8) & 0xFF;
+		// encode sensor data into the payload
+        payload[0] = (data.vbat >> 8) & 0xFF;
         payload[1] = data.vbat & 0xFF;
 
-		// temperature: 3 bytes (16-bit signed integer + 1 byte for sign)
-		payload[2] = (data.temp < 0) ? 1 : 0;          // sign byte: 1 for negative, 0 for positive
-		payload[3] = (data.temp >> 8) & 0xFF;
-        payload[4] = data.temp & 0xFF;
+        payload[2] = (data.temp >> 8) & 0xFF;
+        payload[3] = data.temp & 0xFF;
 
-		// humidity: 2 bytes (16 bits)
-		payload[5] = (data.hum >> 8) & 0xFF;
-        payload[6] = data.hum & 0xFF;
+        payload[4] = (data.hum >> 8) & 0xFF;
+        payload[5] = data.hum & 0xFF;
 
-		// adc voltage: 2 bytes (16 bits)
-		payload[7] = (data.vadc >> 8) & 0xFF;
-        payload[8] = data.vadc & 0xFF;
+        payload[6] = (data.vadc >> 8) & 0xFF;
+        payload[7] = data.vadc & 0xFF;
 
 		// indicate data transmission with the TX LED
 		printk("sending random data...\n");
 		gpio_pin_set_dt(&led_tx, 1);
 
 		// send the payload over LoRaWAN (unconfirmed message)
-		ret = lorawan_send(LORAWAN_PORT, payload, sizeof(payload), LORAWAN_MSG_UNCONFIRMED);
+		ret = lorawan_send(LORAWAN_PORT, payload, PAYLOAD_SIZE, LORAWAN_MSG_UNCONFIRMED);
 		
 		// handle transmission errors
 		if (ret == -EAGAIN) {

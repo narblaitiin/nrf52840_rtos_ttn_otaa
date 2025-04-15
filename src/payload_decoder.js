@@ -1,4 +1,3 @@
-
 function decodeUplink(input) {
     // input payload is an array of bytes (e.g., input.bytes)
     var bytes = input.bytes;

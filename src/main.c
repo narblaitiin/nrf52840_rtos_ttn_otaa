@@ -35,15 +35,15 @@ int8_t main(void)
 	gpio_pin_set_dt(&led_tx, 0);		// turn off TX LED
 	gpio_pin_set_dt(&led_rx, 0);		// turn off TX LED
 
-	// Initialize LoRaWAN protocol and register the device
+	// initialize LoRaWAN protocol and register the device
 	app_lorawan_init(dev);
 
 	printk("Geophone Measurement Simulation and Process Information\nBoard: %s\n", CONFIG_BOARD);
 	
-	// Start the main loop for data simulation and transmission
+	// start the main loop for data simulation and transmission
 	while (1) {
 
-		// Generate random simulated sensor data
+		// generate random simulated sensor data
 		data.vbat = sys_rand16_get() % 101;            // battery voltage: 0-100
 		data.temp = sys_rand16_get() % 201 - 100;      // temperature: -100 to 100
 		data.hum = sys_rand16_get() % 101;             // humidity: 0-100
@@ -89,7 +89,7 @@ int8_t main(void)
 		printk("data sent successfully!\n");
 		gpio_pin_set_dt(&led_tx, 0);
 
-		// Wait before the next iteration
+		// wait before the next iteration
 		k_sleep(DELAY);
 	}
 	return 0;

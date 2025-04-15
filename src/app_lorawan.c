@@ -47,42 +47,45 @@ int8_t app_lorawan_init(const struct device *dev)
 	uint8_t join_eui[]	= LORAWAN_JOIN_EUI;
 	uint8_t app_key[]	= LORAWAN_APP_KEY;
 
-	// initialization and reading/writing the devnonce parameter
+	// initialize non-volatile storage (NVS) and read the current dev_nonce value
 	app_flash_init(&fs);
 	app_flash_init_param(&fs, NVS_DEVNONCE_ID, &dev_nonce);
 
-	printk("starting lorawan node\n");
+	printk("starting lorawan node initialization\n");
 
-    // getting lora sx1276 device
+    // retrieve the LoRa SX1276 device
 	dev = DEVICE_DT_GET(DT_ALIAS(lora0));
 	if (!device_is_ready(dev)) {
-		printk("%s: device not ready\n", dev->name);
+		printk("%s: lorawan device not ready\n", dev->name);
 		return 0;
 	}
 
 	printk("starting lorawan stack\n");
 
-    // starting device
+    // set the region (Europe)
 	ret = lorawan_set_region(LORAWAN_REGION_EU868);
 	if (ret < 0) {
-		printk("lorawan_set_region failed: %d\n", ret);
+		printk("failed to start LoRaWAN stack. error: %d\n", ret);
 		return 0;
 	}
 
+	// indicate device activity by toggling the transmission LED
 	gpio_pin_set_dt(&led_tx, 1);
 
+	// start the LoRaWAN stack
 	ret = lorawan_start();
 	if (ret < 0) {
-		printk("lorawan_start failed. error: %d\n", ret);
+		printk("failed to start lorawan stack. error: %d\n", ret);
 		return 0;
 	} else {
+			// allow some time for the stack to stabilize
 			k_sleep(K_MSEC(500));
 	}
 
-	// enable ADR
+	// enable Adaptive Data Rate (ADR) to optimize communication settings
     lorawan_enable_adr(true);
 
-    // enable callbacks
+    // register downlink and data rate change callbacks for receiving messages and updates
 	struct lorawan_downlink_cb downlink_cb = {
 		.port = LW_RECV_PORT_ANY,
 		.cb = dl_callback
@@ -90,7 +93,7 @@ int8_t app_lorawan_init(const struct device *dev)
 	lorawan_register_downlink_callback(&downlink_cb);
 	lorawan_register_dr_changed_callback(lorwan_datarate_changed);  
 
-	// configuration of lorawan parameters 
+	// configuration of lorawan network using OTAA
     join_cfg.mode = LORAWAN_ACT_OTAA;
 	join_cfg.dev_eui = dev_eui;
 	join_cfg.otaa.join_eui = join_eui;
@@ -98,39 +101,45 @@ int8_t app_lorawan_init(const struct device *dev)
 	join_cfg.otaa.nwk_key = app_key;
 	join_cfg.otaa.dev_nonce = dev_nonce;
 
+	// attempt to join the LoRaWAN network using OTAA
 	do {
-		printk("joining network over OTAA, dev nonce %d, attempt %d\n", join_cfg.otaa.dev_nonce, itr++);
+		printk("attempting to join LoRaWAN network using OTAA. Dev nonce: %d, attempt: %d\n", join_cfg.otaa.dev_nonce, itr++);
 
+		// indicate receiving activity by toggling the reception LED
 		gpio_pin_set_dt(&led_rx, 1);
 
 		ret = lorawan_join(&join_cfg);
 		if (ret < 0) {
 			if (ret == -ETIMEDOUT) {
-				printk("timed-out waiting for response.\n");
+				printk("join request timed out. Retrying...\n");
 			} else {
-				printk("join network failed. error: %d\n", ret);
+				printk("failed to join network. Error: %d\n", ret);
 			}
 		} else {
-			printk("OTAA join successful\n");
+			printk("successfully joined LoRaWAN network using OTAA.\n");
 		}
 
+		// increment and save the device nonce in NVS for the next attempt
 		dev_nonce++;
 		join_cfg.otaa.dev_nonce = dev_nonce;
 
 		// save value away in Non-Volatile Storage.
 		err = nvs_write(&fs, NVS_DEVNONCE_ID, &dev_nonce, sizeof(dev_nonce));
 		if (err < 0) {
-			printk("NVS: failed to write id %d. error: %d\n", NVS_DEVNONCE_ID, err);
+			printk("NVS: failed to write dev_nonce (id %d). error: %d\n", NVS_DEVNONCE_ID, err);
 		}
 
+		// if the join attempt failed, wait before retrying
 		if (ret < 0) {
 			// if failed, wait before re-trying.
 			k_sleep(K_MSEC(10000));
 		}
 	} while (ret != 0 && itr < MAX_JOIN_ATTEMPTS);
 
+	// turn off LEDs to indicate the end of the process
 	gpio_pin_set_dt(&led_tx, 0);
 	gpio_pin_set_dt(&led_rx, 0);
+	
     return 0;
 }
 

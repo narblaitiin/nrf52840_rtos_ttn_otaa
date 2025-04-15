@@ -71,7 +71,7 @@ int8_t main(void)
 		// handle transmission errors
 		if (ret == -EAGAIN) {
 			printk("LoRaWAN send failed (retry): %d. continuing...\n", ret);
-			k_sleep(DELAY);
+			k_sleep(K_SECONDS(10));
 			continue;
 		}
 		

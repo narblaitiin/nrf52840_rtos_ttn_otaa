@@ -11,9 +11,6 @@
 //  ========== app_flash_init ==============================================================
 int8_t app_flash_init(struct nvs_fs *fs)
 {
-//  ========== app_flash_init ==============================================================
-int8_t app_flash_init(struct nvs_fs *fs)
-{
 	struct flash_pages_info info;
 	int8_t ret = 0;
 	ssize_t size = 0;

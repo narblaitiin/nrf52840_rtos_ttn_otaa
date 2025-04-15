@@ -71,12 +71,12 @@ int8_t main(void)
 		printk("sending random data...\n");
 		gpio_pin_set_dt(&led_tx, 1);
 
-		// send the payload over LoRaWAN (confirmed message)
-		ret = lorawan_send(LORAWAN_PORT, payload, sizeof(payload), LORAWAN_MSG_CONFIRMED);
+		// send the payload over LoRaWAN (unconfirmed message)
+		ret = lorawan_send(LORAWAN_PORT, payload, sizeof(payload), LORAWAN_MSG_UNCONFIRMED);
 		
 		// handle transmission errors
 		if (ret == -EAGAIN) {
-			printk("LoRaWAN send failed (retry): %d. continuing...\n" ret);
+			printk("LoRaWAN send failed (retry): %d. continuing...\n", ret);
 			k_sleep(DELAY);
 			continue;
 		}

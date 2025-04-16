@@ -51,16 +51,16 @@ int8_t app_lorawan_init(const struct device *dev)
 	app_flash_init(&fs);
 	app_flash_init_param(&fs, NVS_DEVNONCE_ID, &dev_nonce);
 
-	printk("starting lorawan node initialization\n");
+	printk("starting LoRaWAN node initialization\n");
 
     // retrieve the LoRa SX1276 device
 	dev = DEVICE_DT_GET(DT_ALIAS(lora0));
 	if (!device_is_ready(dev)) {
-		printk("%s: lorawan device not ready\n", dev->name);
+		printk("%s: LoRaWAN device not ready\n", dev->name);
 		return 0;
 	}
 
-	printk("starting lorawan stack\n");
+	printk("starting LoRaWAN stack\n");
 
     // set the region (Europe)
 	ret = lorawan_set_region(LORAWAN_REGION_EU868);
@@ -75,7 +75,7 @@ int8_t app_lorawan_init(const struct device *dev)
 	// start the LoRaWAN stack
 	ret = lorawan_start();
 	if (ret < 0) {
-		printk("failed to start lorawan stack. error: %d\n", ret);
+		printk("failed to start LoRaWAN stack. error: %d\n", ret);
 		return 0;
 	} else {
 			// allow some time for the stack to stabilize
@@ -111,9 +111,9 @@ int8_t app_lorawan_init(const struct device *dev)
 		ret = lorawan_join(&join_cfg);
 		if (ret < 0) {
 			if (ret == -ETIMEDOUT) {
-				printk("join request timed out. Retrying...\n");
+				printk("join request timed out. retrying...\n");
 			} else {
-				printk("failed to join network. Error: %d\n", ret);
+				printk("failed to join network. error: %d\n", ret);
 			}
 		} else {
 			printk("successfully joined LoRaWAN network using OTAA.\n");

@@ -21,7 +21,7 @@
 #define LED_TX                  DT_ALIAS(ledtx)     // declared in device tree 
 #define LED_RX                  DT_ALIAS(ledrx)     // declared in device tree
 #define DELAY 			        K_MINUTES(2)   
-#define PAYLOAD_SIZE            8
+#define PAYLOAD_SIZE            12
 
 // customize based on network configuration
 #define LORAWAN_DEV_EUI			{ 0x70, 0xB3, 0xD5, 0x7E, 0xD0, 0x06, 0x21, 0xA5 }

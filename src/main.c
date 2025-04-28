@@ -7,6 +7,7 @@
 
 //  ========== includes ====================================================================
 #include "app_lorawan.h"
+#include "app_rtc.h"
 
 //  ========== globals =====================================================================
 // define GPIO specifications for the LEDs used to indicate transmission (TX) and reception (RX)
@@ -16,12 +17,13 @@ static const struct gpio_dt_spec led_rx = GPIO_DT_SPEC_GET(LED_RX, gpios);
 //  ========== main ========================================================================
 int8_t main(void)
 {
-	const struct device *dev;
+	const struct device *lora_dev, *rtc_dev;
 	uint8_t payload[PAYLOAD_SIZE] = {0};
     int8_t ret = 0;
 
 	// structure to hold simulated sensor data
 	struct data_t {
+		int32_t timestamp;
 		int16_t vbat;  // battery voltage in millivolts
 		int16_t temp;  // temperature in tenths of a degree Celsius
 		int16_t hum;   // humidity as a percentage
@@ -35,7 +37,14 @@ int8_t main(void)
 	gpio_pin_set_dt(&led_rx, 0);		// turn off TX LED
 
 	// initialize LoRaWAN protocol and register the device
-	app_lorawan_init(dev);
+	app_lorawan_init(lora_dev);
+
+	// initialize DS3231 RTC device via I2C (Pins: SDA -> P0.09, SCL -> P0.0)
+    rtc_dev = DEVICE_DT_GET_ONE(maxim_ds3231);
+	app_rtc_init(rtc_dev);
+
+	// retrieve the current timestamp from the RTC device 
+	data.timestamp = app_rtc_get_time(rtc_dev);
 
 	printk("Geophone Measurement Simulation and Process Information\nBoard: %s\n", CONFIG_BOARD);
 	
@@ -47,19 +56,25 @@ int8_t main(void)
 		data.temp = sys_rand16_get() % 201 - 100;      // temperature: -100 to 100
 		data.hum = sys_rand16_get() % 101;             // humidity: 0-100
 		data.vadc = sys_rand16_get() % 3301;           // ADC voltage: 0-3300 mV
+
+		// add the timestamp to the start of the data buffer
+		payload[0] = (data.timestamp >> 24) & 0xFF; // most significant byte
+		payload[1] = (data.timestamp >> 16) & 0xFF;
+		payload[2] = (data.timestamp >> 8) & 0xFF;
+		payload[3] = data.timestamp & 0xFF;        // least significant byte
 		
 		// encode sensor data into the payload
-        payload[0] = (data.vbat >> 8) & 0xFF;
-        payload[1] = data.vbat & 0xFF;
+        payload[4] = (data.vbat >> 8) & 0xFF;
+        payload[5] = data.vbat & 0xFF;
 
-        payload[2] = (data.temp >> 8) & 0xFF;
-        payload[3] = data.temp & 0xFF;
+        payload[6] = (data.temp >> 8) & 0xFF;
+        payload[7] = data.temp & 0xFF;
 
-        payload[4] = (data.hum >> 8) & 0xFF;
-        payload[5] = data.hum & 0xFF;
+        payload[8] = (data.hum >> 8) & 0xFF;
+        payload[9] = data.hum & 0xFF;
 
-        payload[6] = (data.vadc >> 8) & 0xFF;
-        payload[7] = data.vadc & 0xFF;
+        payload[10] = (data.vadc >> 8) & 0xFF;
+        payload[11] = data.vadc & 0xFF;
 
 		// indicate data transmission with the TX LED
 		printk("sending random data...\n");

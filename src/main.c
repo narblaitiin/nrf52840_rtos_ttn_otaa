@@ -17,9 +17,7 @@ static const struct gpio_dt_spec led_rx = GPIO_DT_SPEC_GET(LED_RX, gpios);
 //  ========== main ========================================================================
 int8_t main(void)
 {
-	const struct device *lora_dev, *rtc_dev;
 	uint8_t payload[PAYLOAD_SIZE] = {0};
-    int8_t ret = 0;
 
 	// structure to hold simulated sensor data
 	struct data_t {
@@ -37,19 +35,40 @@ int8_t main(void)
 	gpio_pin_set_dt(&led_rx, 0);		// turn off TX LED
 
 	// initialize LoRaWAN protocol and register the device
-	app_lorawan_init(lora_dev);
+	int8_t ret = app_lorawan_init();
+	if (ret != 1) {
+		printk("failed to initialze LoRaWAN protocol\n");
+		return 0;
+	}
 
 	// initialize DS3231 RTC device via I2C (Pins: SDA -> P0.09, SCL -> P0.0)
-    rtc_dev = DEVICE_DT_GET_ONE(maxim_ds3231);
-	app_rtc_init(rtc_dev);
+    const struct device *rtc_dev = app_rtc_init();
+    if (!rtc_dev) {
+        printk("failed to initialize RTC device\n");
+        return 0;
+    }
 
 	// retrieve the current timestamp from the RTC device 
-	data.timestamp = app_rtc_get_time(rtc_dev);
+	struct tm new_time = {
+        .tm_sec = 0,
+        .tm_min = 0,
+        .tm_hour = 12,
+        .tm_mday = 30,
+        .tm_mon = 3,   // April (0-based)
+        .tm_year = 125, // 2025 (since 1900)
+        .tm_wday = 3    // Wednesday
+    };
 
 	printk("Geophone Measurement Simulation and Process Information\nBoard: %s\n", CONFIG_BOARD);
 	
 	// start the main loop for data simulation and transmission
 	while (1) {
+
+		// retrieve the current timestamp from the RTC device 
+		if (app_rtc_set_time(rtc_dev, &new_time) == 0) {
+			struct tm current_time;
+			data.timestamp = app_rtc_get_time(rtc_dev, &current_time);
+		}
 
 		// generate random simulated sensor data
 		data.vbat = sys_rand16_get() % 101;            // battery voltage: 0-100

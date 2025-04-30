@@ -68,6 +68,10 @@ int8_t main(void)
 		if (app_rtc_set_time(rtc_dev, &new_time) == 0) {
 			struct tm current_time;
 			data.timestamp = app_rtc_get_time(rtc_dev, &current_time);
+		} else {
+			printk("RTC set time failed\n");
+			k_sleep(K_SECONDS(10));
+			continue;
 		}
 
 		// generate random simulated sensor data
@@ -104,14 +108,18 @@ int8_t main(void)
 		
 		// handle transmission errors
 		if (ret == -EAGAIN) {
-			printk("LoRaWAN send failed (retry): %d. continuing...\n", ret);
+			printk("LoRaWAN send failed (retry). error: %d\n", ret);
+			gpio_pin_set_dt(&led_tx, 0);
 			k_sleep(K_SECONDS(10));
 			continue;
 		}
 		
+		// handle transmission errors
 		if (ret < 0) {
-			printk("LoRaWAN send failed: %d\n", ret);
-			return(0);
+			printk("LoRaWAN send failed. error: %d. retrying\n", ret);
+			gpio_pin_set_dt(&led_tx, 0);
+        	k_sleep(K_SECONDS(10));
+        	continue;
 		}
 
 		printk("data sent successfully!\n");

@@ -13,6 +13,23 @@
 // define GPIO specifications for the LEDs used to indicate transmission (TX) and reception (RX)
 static const struct gpio_dt_spec led_tx = GPIO_DT_SPEC_GET(LED_TX, gpios);
 static const struct gpio_dt_spec led_rx = GPIO_DT_SPEC_GET(LED_RX, gpios);
+static void dl_callback(uint8_t port, bool data_pending,
+			int16_t rssi, int8_t snr,
+			uint8_t len, const uint8_t *hex_data)
+{
+	printk("Port %d, Pending %d, RSSI %ddB, SNR %ddBm", port, data_pending, rssi, snr);
+	// if (hex_data) {
+	// 	printk(hex_data, len, "Payload: ");
+	// }
+}
+
+static void lorwan_datarate_changed(enum lorawan_datarate dr)
+{
+	uint8_t unused, max_size;
+
+	lorawan_get_payload_sizes(&unused, &max_size);
+	printk("New Datarate: DR_%d, Max Payload %d", dr, max_size);
+}
 
 //  ========== main ========================================================================
 int8_t main(void)
@@ -35,9 +52,50 @@ int8_t main(void)
 	gpio_pin_set_dt(&led_rx, 0);		// turn off TX LED
 
 	// initialize LoRaWAN protocol and register the device
-	int8_t ret = app_lorawan_init();
-	if (ret != 1) {
-		printk("failed to initialze LoRaWAN protocol\n");
+	// int8_t ret = app_lorawan_init();
+	// if (ret != 1) {
+	// 	printk("failed to initialze LoRaWAN protocol\n");
+	// 	return 0;
+	// }
+
+	const struct device *lora_dev;
+	struct lorawan_join_config join_cfg;
+	uint8_t dev_eui[] = LORAWAN_DEV_EUI;
+	uint8_t join_eui[] = LORAWAN_JOIN_EUI;
+	uint8_t app_key[] = LORAWAN_APP_KEY;
+	int ret;
+
+	struct lorawan_downlink_cb downlink_cb = {
+		.port = LW_RECV_PORT_ANY,
+		.cb = dl_callback
+	};
+
+	lora_dev = DEVICE_DT_GET(DT_ALIAS(lora0));
+	if (!device_is_ready(lora_dev)) {
+		printk("%s: device not ready.", lora_dev->name);
+		return 0;
+	}
+
+	ret = lorawan_start();
+	if (ret < 0) {
+		printk("lorawan_start failed: %d", ret);
+		return 0;
+	}
+
+	lorawan_register_downlink_callback(&downlink_cb);
+	lorawan_register_dr_changed_callback(lorwan_datarate_changed);
+
+	join_cfg.mode = LORAWAN_ACT_OTAA;
+	join_cfg.dev_eui = dev_eui;
+	join_cfg.otaa.join_eui = join_eui;
+	join_cfg.otaa.app_key = app_key;
+	join_cfg.otaa.nwk_key = app_key;
+	join_cfg.otaa.dev_nonce = 0u;
+
+	printk("Joining network over OTAA");
+	ret = lorawan_join(&join_cfg);
+	if (ret < 0) {
+		printk("lorawan_join_network failed: %d", ret);
 		return 0;
 	}
 
@@ -62,7 +120,7 @@ int8_t main(void)
 	printk("Geophone Measurement Simulation and Process Information\n");
 	
 	// start the main loop for data simulation and transmission
-	while (1) {
+	for (int8_t i =0; i < 5; i++) {
 
 		// retrieve the current timestamp from the RTC device 
 		if (app_rtc_set_time(rtc_dev, &new_time) == 0) {

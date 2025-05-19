@@ -20,7 +20,7 @@
 //  ========== defines =====================================================================
 #define LED_TX                  DT_ALIAS(ledtx)     // declared in device tree 
 #define LED_RX                  DT_ALIAS(ledrx)     // declared in device tree
-#define DELAY 			        K_MINUTES(2)   
+#define DELAY 			        K_MINUTES(1)   
 #define PAYLOAD_SIZE            12
 
 // customize based on network configuration

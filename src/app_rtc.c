@@ -63,7 +63,6 @@ int32_t app_rtc_get_time(const struct device *i2c_dev, struct tm *date_time)
             date_time->tm_year + 1900, date_time->tm_mon + 1, date_time->tm_mday,
             date_time->tm_hour, date_time->tm_min, date_time->tm_sec);
     printk("unix timestamp: %d", timestamp);
-
     return timestamp;
 }
 

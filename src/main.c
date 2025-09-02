@@ -35,6 +35,7 @@ static void lorwan_datarate_changed(enum lorawan_datarate dr)
 int8_t main(void)
 {
 	uint8_t payload[PAYLOAD_SIZE] = {0};
+	int8_t ret;
 
 	// structure to hold simulated sensor data
 	struct data_t {
@@ -52,7 +53,7 @@ int8_t main(void)
 	gpio_pin_set_dt(&led_rx, 0);		// turn off TX LED
 
 	// initialize LoRaWAN protocol and register the device
-	// int8_t ret = app_lorawan_init();
+	// ret = app_lorawan_init();
 	// if (ret != 1) {
 	// 	printk("failed to initialze LoRaWAN protocol\n");
 	// 	return 0;
@@ -63,7 +64,6 @@ int8_t main(void)
 	uint8_t dev_eui[] = LORAWAN_DEV_EUI;
 	uint8_t join_eui[] = LORAWAN_JOIN_EUI;
 	uint8_t app_key[] = LORAWAN_APP_KEY;
-	int ret;
 
 	struct lorawan_downlink_cb downlink_cb = {
 		.port = LW_RECV_PORT_ANY,
